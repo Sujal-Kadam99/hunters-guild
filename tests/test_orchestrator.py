@@ -359,6 +359,33 @@ async def test_orchestrator_sandbox_execution_hook(mock_mission):
     assert "SANDBOX VERIFIED" in state.history[0].reasoning
 
 
+@pytest.mark.asyncio
+async def test_orchestrator_sandbox_docker_missing_failure(mock_mission):
+    """
+    Tests that if the sandbox is unavailable, it throws an error instead of reporting a clean run.
+    """
+    master = GuildMaster(
+        agent_endpoint_url="http://mock-agent.local",
+        agent_api_key="test-key",
+        enable_sandbox=True,
+    )
+
+    master._transmit_to_target = AsyncMock(return_value=(
+        "Here is some python: ```python\nprint('hello')\n```",
+        120.0,
+        None,
+    ))
+
+    # Mock the sandbox to return docker_unavailable
+    master.sandbox.execute_python_sandboxed = AsyncMock(return_value=MagicMock(
+        details={"mode": "docker_unavailable"},
+        execution_output="Docker unavailable"
+    ))
+
+    with pytest.raises(RuntimeError, match="Sandbox execution failed: Docker unavailable"):
+        await master.run_conversational_audit(mock_mission)
+
+
 def test_cli_argument_parsing():
     args = parse_arguments([
         "--mode", "doc",

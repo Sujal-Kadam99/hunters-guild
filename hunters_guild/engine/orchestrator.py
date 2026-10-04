@@ -220,6 +220,8 @@ class GuildMaster:
         # 3. Check for Executable Python code
         if "```python" in raw_response or "```py" in raw_response:
             result = await self.sandbox.execute_python_sandboxed(raw_response)
+            if result.details.get("mode") == "docker_unavailable":
+                raise RuntimeError("Sandbox execution failed: " + result.execution_output)
             if result.risk_score >= 70:
                 return result
 
