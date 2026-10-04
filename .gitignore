@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.installed.cfg
+*.egg-link
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.xml
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.kilo/
+
+# Scratch / temp
+scratch/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / env
+.env
+*.env
+secrets.json
+
+# Word temp files
+~$*.docx
+*.docx
+
+# Python cache in subdirs
+hunters_guild/**/__pycache__/
+tests/__pycache__/
