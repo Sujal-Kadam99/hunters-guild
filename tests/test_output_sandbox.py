@@ -87,7 +87,7 @@ import math
 val = math.sqrt(144)
 print(f"CALCULATED_RESULT={val}")
 """
-    result = await sandbox.execute_python_sandboxed(code)
+    result = await sandbox.execute_python_sandboxed(code, allow_unsafe_host_execution=True)
 
     assert isinstance(result, SandboxResult)
     assert result.execution_type == ExecutionType.PYTHON_SANDBOX
@@ -105,7 +105,7 @@ import time
 while True:
     time.sleep(0.1)
 """
-    result = await fast_sandbox.execute_python_sandboxed(infinite_loop_code)
+    result = await fast_sandbox.execute_python_sandboxed(infinite_loop_code, allow_unsafe_host_execution=True)
 
     assert result.executed_successfully is False
     assert "timed out" in result.execution_output
@@ -116,8 +116,32 @@ while True:
 async def test_execute_python_docker_fallback_when_unavailable(sandbox):
     with patch.object(sandbox, "_is_docker_available", new=AsyncMock(return_value=False)):
         code = "print('FALLBACK_MODE_SUCCESS')"
-        result = await sandbox.execute_python_sandboxed(code, use_docker=True)
+        result = await sandbox.execute_python_sandboxed(code, use_docker=True, allow_unsafe_host_execution=True)
 
         assert result.executed_successfully is True
         assert "FALLBACK_MODE_SUCCESS" in result.execution_output
         assert result.details["mode"] == "subprocess"
+
+
+@pytest.mark.asyncio
+@patch("asyncio.create_subprocess_exec")
+async def test_execute_python_sandbox_default_denies_unsafe(mock_exec, sandbox):
+    with patch.object(sandbox, "_is_docker_available", new=AsyncMock(return_value=False)):
+        code = "print('SHOULD_NOT_RUN')"
+        result = await sandbox.execute_python_sandboxed(code)
+        
+        assert result.executed_successfully is False
+        assert "Unsafe host execution disabled" in result.details.get("error", "")
+        mock_exec.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_execute_python_sandbox_flag_allows_unsafe(sandbox):
+    with patch.object(sandbox, "_is_docker_available", new=AsyncMock(return_value=False)):
+        code = "print('RUNS_WITH_FLAG')"
+        result = await sandbox.execute_python_sandboxed(code, allow_unsafe_host_execution=True)
+        
+        assert result.executed_successfully is True
+        assert "RUNS_WITH_FLAG" in result.execution_output
+        assert result.details["mode"] == "subprocess"
+

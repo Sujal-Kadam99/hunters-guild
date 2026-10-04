@@ -253,6 +253,7 @@ class OutputExecutionSandbox:
         self,
         code_snippet: str,
         use_docker: bool = False,
+        allow_unsafe_host_execution: bool = False,
     ) -> SandboxResult:
         """
         Executes Python code snippet within a restricted subprocess or Docker container
@@ -314,7 +315,20 @@ class OutputExecutionSandbox:
                     details={"mode": "docker", "timeout": True},
                 )
             except Exception as e:
-                logger.warning("Docker execution failed (%s), falling back to subprocess.", e)
+                logger.warning("Docker execution failed (%s)", e)
+
+        # Ensure we only use host execution if explicitly allowed
+        if not allow_unsafe_host_execution:
+            latency_ms = (time.perf_counter() - start_time) * 1000.0
+            return SandboxResult(
+                execution_type=ExecutionType.PYTHON_SANDBOX,
+                payload_tested=clean_code[:500],
+                executed_successfully=False,
+                execution_output="Docker execution failed or was unavailable, and unsafe host execution is disabled.",
+                latency_ms=latency_ms,
+                risk_score=0,
+                details={"mode": "docker_unavailable", "error": "Unsafe host execution disabled."}
+            )
 
         # Subprocess Sandboxed Execution Mode
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
