@@ -283,6 +283,7 @@ async def test_http_429_quota_exhausted_immediate_failover():
             api_key="test-key",
             model="gemini-2.0-flash",
             messages=[{"role": "user", "content": "Hello"}],
+            safe_harbor=False
         )
 
         assert "[QUOTA EXHAUSTED]" in text

@@ -61,14 +61,14 @@ async def run_servers():
     target_app.router.add_post('/v1/chat/completions', mock_target_handler)
     target_runner = web.AppRunner(target_app)
     await target_runner.setup()
-    target_site = web.TCPSite(target_runner, 'localhost', 8081)
+    target_site = web.TCPSite(target_runner, 'localhost', 8181)
     await target_site.start()
     
     reasoning_app = web.Application()
     reasoning_app.router.add_post('/v1/chat/completions', mock_reasoning_handler)
     reasoning_runner = web.AppRunner(reasoning_app)
     await reasoning_runner.setup()
-    reasoning_site = web.TCPSite(reasoning_runner, 'localhost', 8082)
+    reasoning_site = web.TCPSite(reasoning_runner, 'localhost', 8182)
     await reasoning_site.start()
     
     return target_runner, reasoning_runner
@@ -81,12 +81,12 @@ async def main():
     logger.info("Starting Mock API Servers...")
     target_runner, reasoning_runner = await run_servers()
     
-    logger.info("Servers started. Target API at port 8081. Reasoning API at port 8082.")
+    logger.info("Servers started. Target API at port 8181. Reasoning API at port 8182.")
     logger.info("-" * 60)
     
     # 1. Define the Target Profile
     target_profile = TargetProfile(
-        endpoint_url="http://localhost:8081/v1/chat/completions",
+        endpoint_url="http://localhost:8181/v1/chat/completions",
         model_identifier="mock-target-model",
         auth_header="Bearer mock_target_key",
         system_fingerprint="mock-fp-123",
@@ -97,7 +97,7 @@ async def main():
     # 2. Initialize the GuildMaster with the local reasoning endpoint
     logger.info("Initializing GuildMaster (Orchestrator)...")
     master = GuildMaster(
-        agent_endpoint_url="http://localhost:8082/v1/chat/completions",
+        agent_endpoint_url="http://localhost:8182/v1/chat/completions",
         agent_api_key="mock_reasoning_key",
         agent_model_name="mock-reasoning-model"
     )

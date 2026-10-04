@@ -280,8 +280,11 @@ Respond ONLY with a valid JSON object matching this schema:
         )
 
         if repro_result:
-            det_label = "Deterministic" if repro_result.is_deterministic else "Flaky"
-            poc.reproducibility_score = f"{repro_result.successful_reproductions}/{repro_result.total_trials} - {repro_result.reproducibility_rate * 100:.0f}% {det_label}"
+            if repro_result.status == "unknown":
+                poc.reproducibility_score = f"Unknown - Could not verify deterministically ({repro_result.total_trials} trials)"
+            else:
+                det_label = "Deterministic" if repro_result.is_deterministic else "Flaky"
+                poc.reproducibility_score = f"{repro_result.successful_reproductions}/{repro_result.total_trials} - {repro_result.reproducibility_rate * 100:.0f}% {det_label}"
             if repro_result.execution_latencies_ms:
                 avg_latency = sum(repro_result.execution_latencies_ms) / len(repro_result.execution_latencies_ms)
                 poc.latency_stability = f"Average {avg_latency:.2f}ms across {len(repro_result.execution_latencies_ms)} trials"

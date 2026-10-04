@@ -158,3 +158,22 @@ async def test_compile_bounty_report_network_fallback(mock_state_with_violation)
         assert poc.estimated_bounty_severity == "Critical"
         assert len(poc.full_trace) == 2
         assert "Implement strict" in poc.remediation
+
+@pytest.mark.asyncio
+async def test_scribe_handles_unknown_reproducibility_status(mock_state_with_violation):
+    from hunters_guild.modules.reproducibility import ReproducibilityResult
+    scribe = ScribeAgent(agent_endpoint_url="http://mock", agent_api_key="key")
+    
+    repro_result = ReproducibilityResult(
+        total_trials=3,
+        successful_reproductions=0,
+        reproducibility_rate=0.0,
+        is_deterministic=False,
+        execution_latencies_ms=[150.0, 160.0, 155.0],
+        status="unknown"
+    )
+    
+    with patch.object(scribe, "_query_report_llm", new=AsyncMock(side_effect=Exception("mock fallback"))):
+        poc = await scribe.compile_bounty_report(mock_state_with_violation, repro_result=repro_result)
+        
+    assert "Unknown - Could not verify deterministically (3 trials)" in poc.reproducibility_score

@@ -71,6 +71,9 @@ class GuildMaster:
         agent_endpoint_url: str,
         agent_api_key: str,
         agent_model_name: str = "gpt-4o-mini",
+        tactician_temperature: float = 0.75,
+        inquisitor_temperature: float = 0.1,
+        scribe_temperature: float = 0.3,
         violation_threshold: int = 75,
         timeout_seconds: float = 45.0,
         enable_sandbox: bool = True,
@@ -98,12 +101,14 @@ class GuildMaster:
             agent_endpoint_url=agent_endpoint_url,
             agent_api_key=agent_api_key,
             agent_model_name=agent_model_name,
+            temperature=tactician_temperature,
             timeout_seconds=timeout_seconds,
         )
         self.inquisitor = inquisitor_agent or InquisitorAgent(
             judge_endpoint_url=agent_endpoint_url,
             judge_api_key=agent_api_key,
             judge_model_name=agent_model_name,
+            temperature=inquisitor_temperature,
             violation_threshold=violation_threshold,
             timeout_seconds=timeout_seconds,
         )
@@ -111,6 +116,7 @@ class GuildMaster:
             agent_endpoint_url=agent_endpoint_url,
             agent_api_key=agent_api_key,
             agent_model_name=agent_model_name,
+            temperature=scribe_temperature,
             timeout_seconds=timeout_seconds,
         )
 

@@ -652,13 +652,15 @@ class WebSocketTransportAdapter:
         stream_callback: Optional[Callable[[str], Any]] = None,
         ssl_verify: bool = True,
         headers: Optional[Dict[str, str]] = None,
+        safe_harbor: bool = True,
     ) -> Tuple[str, float, Optional[List[Dict[str, Any]]]]:
         """
         Connects to a WebSocket endpoint, transmits the formatted payload, and aggregates
         incoming frames into a complete response.
         Returns: (aggregated_text, latency_ms, None)
         """
-        await _safe_harbor_engine.acquire_permission()
+        if safe_harbor:
+            await _safe_harbor_engine.acquire_permission()
         start_time = time.perf_counter()
         ttft_ms: Optional[float] = None
 
@@ -679,7 +681,8 @@ class WebSocketTransportAdapter:
                 req_headers["Authorization"] = f"Bearer {api_key}"
                 req_headers["X-API-Key"] = api_key
         
-        req_headers.update(_safe_harbor_engine.build_compliant_headers())
+        if safe_harbor:
+            req_headers.update(_safe_harbor_engine.build_compliant_headers())
         
         if headers:
             req_headers.update(headers)
@@ -901,6 +904,7 @@ class UniversalAdapter:
         temperature: float = 0.7,
         tools: Optional[List[Dict[str, Any]]] = None,
         max_tokens: int = 1024,
+        safe_harbor: bool = True,
     ) -> Tuple[Dict[str, str], Dict[str, Any], str]:
         """
         Builds the HTTP headers, payload, and final URL for the specified provider.
@@ -969,8 +973,9 @@ class UniversalAdapter:
             max_tokens=max_tokens,
         )
 
-        safe_headers = _safe_harbor_engine.build_compliant_headers(api_key if api_key else None)
-        headers.update(safe_headers)
+        if safe_harbor:
+            safe_headers = _safe_harbor_engine.build_compliant_headers(api_key if api_key else None)
+            headers.update(safe_headers)
 
         return headers, payload, url
 
@@ -1045,6 +1050,7 @@ class UniversalAdapter:
         tools: Optional[List[Dict[str, Any]]] = None,
         timeout: float = 45.0,
         provider: Optional[ProviderType] = None,
+        safe_harbor: bool = True,
         **kwargs: Any,
     ) -> Tuple[str, float, Optional[List[Dict[str, Any]]]]:
         """
@@ -1102,6 +1108,7 @@ class UniversalAdapter:
             tools=tools,
             timeout=timeout,
             provider=provider,
+            safe_harbor=safe_harbor,
         )
 
     @classmethod
@@ -1206,9 +1213,11 @@ class UniversalAdapter:
         tools: Optional[List[Dict[str, Any]]],
         timeout: float,
         provider: ProviderType,
+        safe_harbor: bool = True,
     ) -> Tuple[str, float, Optional[List[Dict[str, Any]]]]:
         """Handles HTTP/HTTPS endpoint requests with dynamic 429 backoff and quota failover."""
-        await _safe_harbor_engine.acquire_permission()
+        if safe_harbor:
+            await _safe_harbor_engine.acquire_permission()
         headers, payload, final_url = cls.format_request(
             provider=provider,
             endpoint_url=endpoint_url,
@@ -1217,6 +1226,7 @@ class UniversalAdapter:
             messages=messages,
             temperature=temperature,
             tools=tools,
+            safe_harbor=safe_harbor,
         )
 
         req_timeout = aiohttp.ClientTimeout(total=timeout)
